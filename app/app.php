@@ -7,6 +7,7 @@ use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\HttpFragmentServiceProvider;
+use ServiceProvider\PokemonServiceProvider;
 
 $parameters = require __DIR__ . '/../config/parameters.php';
 
@@ -28,5 +29,6 @@ $app->register(new DoctrineOrmServiceProvider(), [
         ],
     ],
 ]);
+$app->register(new PokemonServiceProvider());
 
 return $app;

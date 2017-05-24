@@ -2,193 +2,34 @@
 
 namespace Evaneos\Archi\Controllers;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
-use Ramsey\Uuid\Uuid;
+use Service\PokemonService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class PokemonController
 {
-    /** @var Connection */
-    private $connection;
+    /** @var PokemonService */
+    private $pokemonService;
 
-    private static $types = [
-        "Bulbizarre",
-        "Herbizarre",
-        "Florizarre",
-        "Salameche",
-        "Reptincel",
-        "Dracaufeu",
-        "Carapuce",
-        "Carabaffe",
-        "Tortank",
-        "Chenipan",
-        "Chrysacier",
-        "Papillusion",
-        "Aspicot",
-        "Coconfort",
-        "Dardargnan",
-        "Roucool",
-        "Roucoups",
-        "Roucarnage",
-        "Rattata",
-        "Rattatac",
-        "Piafabec",
-        "Rapasdepic",
-        "Abo",
-        "Arbok",
-        "Pikachu",
-        "Raichu",
-        "Sabelette",
-        "Sablaireau",
-        "Nidoran?",
-        "Nidorina",
-        "Nidoqueen",
-        "Nidorino",
-        "Nidoking",
-        "Melofee",
-        "Melodelfe",
-        "Goupix",
-        "Feunard",
-        "Rondoudou",
-        "Grodoudou",
-        "Nosferapti",
-        "Nosferalto",
-        "Mystherbe",
-        "Ortide",
-        "Rafflesia",
-        "Paras",
-        "Parasect",
-        "Mimitoss",
-        "Aeromite",
-        "Taupiqueur",
-        "Triopikeur",
-        "Miaouss",
-        "Persian",
-        "Psykokwak",
-        "Akwakwak",
-        "Ferosinge",
-        "Colossinge",
-        "Caninos",
-        "Arcanin",
-        "Ptitard",
-        "Tetarte",
-        "Tartard",
-        "Abra",
-        "Kadabra",
-        "Alakazam",
-        "Machoc",
-        "Machopeur",
-        "Mackogneur",
-        "Chetiflor",
-        "Boustiflor",
-        "Empiflor",
-        "Tentacool",
-        "Tentacruel",
-        "Racaillou",
-        "Gravalanch",
-        "Grolem",
-        "Ponyta",
-        "Galopa",
-        "Ramoloss",
-        "Flagadoss",
-        "Magneti",
-        "Magneton",
-        "Canarticho",
-        "Doduo",
-        "Dodrio",
-        "Otaria",
-        "Lamantine",
-        "Tadmorv",
-        "Grotadmorv",
-        "Kokiyas",
-        "Crustabri",
-        "Fantominus",
-        "Spectrum",
-        "Ectoplasma",
-        "Onix",
-        "Soporifik",
-        "Hypnomade",
-        "Kraby",
-        "Krabboss",
-        "Voltorbe",
-        "Electrode",
-        "Noeunoeuf",
-        "Noadkoko",
-        "Osselait",
-        "Ossatueur",
-        "Kicklee",
-        "Tygnon",
-        "Excelangue",
-        "Smogo",
-        "Smogogo",
-        "Rhinocorne",
-        "Rhinoferos",
-        "Leveinard",
-        "Saquedeneu",
-        "Kangourex",
-        "Hypotrempe",
-        "Hypocean",
-        "Poissirene",
-        "Poissoroy",
-        "Stari",
-        "Staross",
-        "M. Mime",
-        "Insecateur",
-        "Lippoutou",
-        "Elektek",
-        "Magmar",
-        "Scarabrute",
-        "Tauros",
-        "Magicarpe",
-        "Leviator",
-        "Lokhlass",
-        "Metamorph",
-        "Evoli",
-        "Aquali",
-        "Voltali",
-        "Pyroli",
-        "Porygon",
-        "Amonita",
-        "Amonistar",
-        "Kabuto",
-        "Kabutops",
-        "Ptera",
-        "Ronflex",
-        "Artikodin",
-        "Electhor",
-        "Sulfura",
-        "Minidraco",
-        "Draco",
-        "Dracolosse",
-        "Mewtwo",
-        "Mew",
-    ];
 
     /**
      * PokemonController constructor.
      *
-     * @param Connection $connection
+     * @param PokemonService $pokemonService
      */
-    public function __construct(Connection $connection)
+    public function __construct(PokemonService $pokemonService)
     {
-        $this->connection = $connection;
+        $this->pokemonService = $pokemonService;
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
-     *
-     * @throws DBALException
      */
-    public function pokedex(Request $request)
+    public function pokedex(Request $request) : JsonResponse
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection';
-        $query = $this->connection->query($sql);
+        $pokedex = $this->pokemonService->pokedex();
 
-        return new JsonResponse([$query->fetchAll()]);
+        return new JsonResponse($pokedex, 200);
     }
 
     /**
@@ -197,22 +38,16 @@ class PokemonController
      * @return JsonResponse
      *
      * @throws \InvalidArgumentException
-     * @throws DBALException
      */
-    public function getInformation($uuid)
+    public function getInformation(string $uuid) : JsonResponse
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection WHERE uuid = :uuid';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->execute();
+        $pokemon = $this->pokemonService->getInformation($uuid);
 
-        $pokemon = $query->fetch();
-
-        if ($pokemon === false) {
-            return new JsonResponse(new \stdClass(), 404);
+        if (!$pokemon) {
+            return new JsonResponse([], 404);
         }
 
-        return new JsonResponse($pokemon);
+        return new JsonResponse($pokemon->toArray(), 200);
     }
 
     /**
@@ -220,29 +55,22 @@ class PokemonController
      *
      * @return JsonResponse
      */
-    public function capture(Request $request)
+    public function capture(Request $request) : JsonResponse
     {
-        $type = $request->get('type');
-        $level = (int) $request->get('level');
-
-        if (in_array($type, self::$types) && ($level > 0 && $level < 31)) {
-            $uuid = (string) Uuid::uuid4();
-
-            $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
-            $query = $this->connection->prepare($sql);
-
-            $query->bindValue('uuid', $uuid);
-            $query->bindValue('type', $type);
-            $query->bindValue('level', $level);
-            $query->execute();
-
-            return new JsonResponse([
-                'uuid' => $uuid,
-                'type' => $type,
-                'level' => $level
+        try {
+            $pokemon = $this->pokemonService->capture([
+                'type' => $request->get('type'),
+                'level' => $request->get('level'),
             ]);
-        } else {
-            return new JsonResponse([], 400);
+
+            return new JsonResponse($pokemon->toArray(), 201);
+        } catch (\Exception $e) {
+            return new JsonResponse(
+                [
+                    'error' => $e->getMessage()
+                ],
+                400
+            );
         }
     }
 
@@ -251,39 +79,26 @@ class PokemonController
      *
      * @return JsonResponse
      */
-    public function evolve($uuid)
+    public function evolve(string $uuid) : JsonResponse
     {
-        $sql = 'SELECT COUNT(uuid) FROM pokemon.collection WHERE uuid = :uuid';
-        $query = $this->connection->prepare($sql);
+        if ($this->pokemonService->exists($uuid)) {
+            $pokemon = $this->pokemonService->getInformation($uuid);
 
-        $query->bindValue('uuid', $uuid);
-        $query->execute();
+            if (!$pokemon) {
+                return new JsonResponse([], 404);
+            }
 
-        $result = $query->fetch();
+            try {
+                $evolvedPokemon = $this->pokemonService->evolve($pokemon);
 
-        if ($result['count']) {
-            $sql = 'SELECT type, level FROM pokemon.collection WHERE uuid = :uuid';
-            $query = $this->connection->prepare($sql);
-
-            $query->bindValue('uuid', $uuid);
-            $query->execute();
-
-            $result = $query->fetch();
-
-            if (in_array($result['level'], [7, 15])) {
-                $sql = 'UPDATE pokemon.collection SET level = level + 1 WHERE uuid = :uuid';
-                $query = $this->connection->prepare($sql);
-
-                $query->bindValue('uuid', $uuid);
-                $query->execute();
-
-                return new JsonResponse([
-                    'uuid' => $uuid,
-                    'type' => $result['type'],
-                    'level' => $result['level'] + 1,
-                ], 200);
-            } else {
-                return new JsonResponse([], 403);
+                return new JsonResponse($evolvedPokemon->toArray(), 200);
+            } catch (\Exception $e) {
+                return new JsonResponse(
+                    [
+                        'error' => $e->getMessage()
+                    ],
+                    400
+                );
             }
         } else {
             return new JsonResponse([], 404);
