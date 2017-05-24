@@ -13,6 +13,159 @@ class PokemonController
     /** @var Connection */
     private $connection;
 
+    private static $types = [
+        "Bulbizarre",
+        "Herbizarre",
+        "Florizarre",
+        "Salameche",
+        "Reptincel",
+        "Dracaufeu",
+        "Carapuce",
+        "Carabaffe",
+        "Tortank",
+        "Chenipan",
+        "Chrysacier",
+        "Papillusion",
+        "Aspicot",
+        "Coconfort",
+        "Dardargnan",
+        "Roucool",
+        "Roucoups",
+        "Roucarnage",
+        "Rattata",
+        "Rattatac",
+        "Piafabec",
+        "Rapasdepic",
+        "Abo",
+        "Arbok",
+        "Pikachu",
+        "Raichu",
+        "Sabelette",
+        "Sablaireau",
+        "Nidoran?",
+        "Nidorina",
+        "Nidoqueen",
+        "Nidorino",
+        "Nidoking",
+        "Melofee",
+        "Melodelfe",
+        "Goupix",
+        "Feunard",
+        "Rondoudou",
+        "Grodoudou",
+        "Nosferapti",
+        "Nosferalto",
+        "Mystherbe",
+        "Ortide",
+        "Rafflesia",
+        "Paras",
+        "Parasect",
+        "Mimitoss",
+        "Aeromite",
+        "Taupiqueur",
+        "Triopikeur",
+        "Miaouss",
+        "Persian",
+        "Psykokwak",
+        "Akwakwak",
+        "Ferosinge",
+        "Colossinge",
+        "Caninos",
+        "Arcanin",
+        "Ptitard",
+        "Tetarte",
+        "Tartard",
+        "Abra",
+        "Kadabra",
+        "Alakazam",
+        "Machoc",
+        "Machopeur",
+        "Mackogneur",
+        "Chetiflor",
+        "Boustiflor",
+        "Empiflor",
+        "Tentacool",
+        "Tentacruel",
+        "Racaillou",
+        "Gravalanch",
+        "Grolem",
+        "Ponyta",
+        "Galopa",
+        "Ramoloss",
+        "Flagadoss",
+        "Magneti",
+        "Magneton",
+        "Canarticho",
+        "Doduo",
+        "Dodrio",
+        "Otaria",
+        "Lamantine",
+        "Tadmorv",
+        "Grotadmorv",
+        "Kokiyas",
+        "Crustabri",
+        "Fantominus",
+        "Spectrum",
+        "Ectoplasma",
+        "Onix",
+        "Soporifik",
+        "Hypnomade",
+        "Kraby",
+        "Krabboss",
+        "Voltorbe",
+        "Electrode",
+        "Noeunoeuf",
+        "Noadkoko",
+        "Osselait",
+        "Ossatueur",
+        "Kicklee",
+        "Tygnon",
+        "Excelangue",
+        "Smogo",
+        "Smogogo",
+        "Rhinocorne",
+        "Rhinoferos",
+        "Leveinard",
+        "Saquedeneu",
+        "Kangourex",
+        "Hypotrempe",
+        "Hypocean",
+        "Poissirene",
+        "Poissoroy",
+        "Stari",
+        "Staross",
+        "M. Mime",
+        "Insecateur",
+        "Lippoutou",
+        "Elektek",
+        "Magmar",
+        "Scarabrute",
+        "Tauros",
+        "Magicarpe",
+        "Leviator",
+        "Lokhlass",
+        "Metamorph",
+        "Evoli",
+        "Aquali",
+        "Voltali",
+        "Pyroli",
+        "Porygon",
+        "Amonita",
+        "Amonistar",
+        "Kabuto",
+        "Kabutops",
+        "Ptera",
+        "Ronflex",
+        "Artikodin",
+        "Electhor",
+        "Sulfura",
+        "Minidraco",
+        "Draco",
+        "Dracolosse",
+        "Mewtwo",
+        "Mew",
+    ];
+
     /**
      * PokemonController constructor.
      *
@@ -69,25 +222,28 @@ class PokemonController
      */
     public function capture(Request $request)
     {
-        $uuid = (string) Uuid::uuid4();
         $type = $request->get('type');
         $level = (int) $request->get('level');
 
-        // TODO check type exists
-        // TODO check level is in bounds
+        if (in_array($type, self::$types) && ($level > 0 && $level < 31)) {
+            $uuid = (string) Uuid::uuid4();
 
-        $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->bindValue('type', $type);
-        $query->bindValue('level', $level);
-        $query->execute();
+            $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
+            $query = $this->connection->prepare($sql);
 
-        return new JsonResponse([
-            'uuid' => $uuid,
-            'type' => $type,
-            'level' => $level
-        ]);
+            $query->bindValue('uuid', $uuid);
+            $query->bindValue('type', $type);
+            $query->bindValue('level', $level);
+            $query->execute();
+
+            return new JsonResponse([
+                'uuid' => $uuid,
+                'type' => $type,
+                'level' => $level
+            ]);
+        } else {
+            return new JsonResponse([], 400);
+        }
     }
 
     /**
@@ -97,8 +253,40 @@ class PokemonController
      */
     public function evolve($uuid)
     {
-        // TODO
+        $sql = 'SELECT COUNT(uuid) FROM pokemon.collection WHERE uuid = :uuid';
+        $query = $this->connection->prepare($sql);
 
-        return new JsonResponse([]);
+        $query->bindValue('uuid', $uuid);
+        $query->execute();
+
+        $result = $query->fetch();
+
+        if ($result['count']) {
+            $sql = 'SELECT type, level FROM pokemon.collection WHERE uuid = :uuid';
+            $query = $this->connection->prepare($sql);
+
+            $query->bindValue('uuid', $uuid);
+            $query->execute();
+
+            $result = $query->fetch();
+
+            if (in_array($result['level'], [7, 15])) {
+                $sql = 'UPDATE pokemon.collection SET level = level + 1 WHERE uuid = :uuid';
+                $query = $this->connection->prepare($sql);
+
+                $query->bindValue('uuid', $uuid);
+                $query->execute();
+
+                return new JsonResponse([
+                    'uuid' => $uuid,
+                    'type' => $result['type'],
+                    'level' => $result['level'] + 1,
+                ], 200);
+            } else {
+                return new JsonResponse([], 403);
+            }
+        } else {
+            return new JsonResponse([], 404);
+        }
     }
 }
