@@ -73,8 +73,17 @@ class PokemonController
         $type = $request->get('type');
         $level = (int) $request->get('level');
 
-        // TODO check type exists
-        // TODO check level is in bounds
+        if (!$this->typeExists($type)) {
+            return $this->createErrorResponse(
+                sprintf('Unknown type "%s".', $type)
+            );
+        }
+
+        if (!$this->levelIsValid($level)) {
+            return $this->createErrorResponse(
+                sprintf('Level "%s" is invalid.', $level)
+            );
+        }
 
         $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
         $query = $this->connection->prepare($sql);
@@ -97,8 +106,94 @@ class PokemonController
      */
     public function evolve($uuid)
     {
-        // TODO
+        $sql = 'SELECT uuid, type, level FROM pokemon.collection WHERE uuid = :uuid';
+        $query = $this->connection->prepare($sql);
+        $query->bindValue('uuid', $uuid);
+        $query->execute();
+        $pokemon = $query->fetch();
 
-        return new JsonResponse([]);
+        if ($pokemon === false) {
+            return new JsonResponse(new \stdClass(), 404);
+        }
+
+        $evolution = $this->getEvolution($pokemon);
+        if ($evolution === false) {
+            return $this->createErrorResponse(
+                sprintf('Pokemon %s cannot evolve.', $pokemon['uuid'])
+            );
+        }
+
+        $sql = 'UPDATE pokemon.collection SET type = :type WHERE uuid = :uuid';
+        $query = $this->connection->prepare($sql);
+        $query->bindValue('uuid', $uuid);
+        $query->bindValue('type', $evolution);
+        $query->execute();
+
+        $evolvedPokemon = array_merge($pokemon, ['type' => $evolution]);
+
+        return new JsonResponse($evolvedPokemon);
+    }
+
+    /**
+     * @param string $type
+     * @return bool
+     */
+    private function typeExists($type)
+    {
+        $knownType = [
+            'bulbizarre',
+            'herbizarre',
+            'florizarre',
+        ];
+
+        return in_array($type, $knownType);
+    }
+
+    /**
+     * @param string $message
+     * @return JsonResponse
+     */
+    private function createErrorResponse($message)
+    {
+        return new JsonResponse(['error' => $message], 400);
+    }
+
+    /**
+     * @param int $level
+     * @return bool
+     */
+    private function levelIsValid($level)
+    {
+        return (1 <= $level && $level <= 30);
+    }
+
+    /**
+     * @param array $pokemon
+     * @return string|bool
+     */
+    private function getEvolution($pokemon)
+    {
+        $evolutionMap = [
+            'bulbizarre' => [
+                'min_level' => 16,
+                'evolution' => 'herbizarre',
+            ],
+            'herbizarre' => [
+                'min_level' => 32,
+                'evolution' => 'florizarre',
+            ],
+        ];
+
+        $type = $pokemon['type'];
+        if (!isset($evolutionMap[$type])) {
+            return false;
+        }
+
+        $minLevel = $evolutionMap[$type]['min_level'];
+        if ($pokemon['level'] < $minLevel) {
+            return false;
+        }
+
+        return $evolutionMap[$type]['evolution'];
     }
 }
