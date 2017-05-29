@@ -1,5 +1,7 @@
 <?php
 
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use ControllerProvider\PokemonControllerProvider;
 use ServiceProvider\ControllerServiceProvider;
 use Silex\Application;

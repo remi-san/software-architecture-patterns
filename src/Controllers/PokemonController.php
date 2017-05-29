@@ -2,40 +2,36 @@
 
 namespace Evaneos\Archi\Controllers;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
-use Ramsey\Uuid\Uuid;
+use Evaneos\Archi\Exceptions\InvalidPokemonLevel;
+use Evaneos\Archi\Exceptions\UnknownPokemonType;
+use Evaneos\Archi\Services\PokemonService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Ramsey\Uuid\Uuid;
 
 class PokemonController
 {
-    /** @var Connection */
-    private $connection;
+    /** @var PokemonService */
+    private $service;
 
     /**
      * PokemonController constructor.
      *
-     * @param Connection $connection
+     * @param PokemonService $service
      */
-    public function __construct(Connection $connection)
+    public function __construct(PokemonService $service)
     {
-        $this->connection = $connection;
+        $this->service = $service;
     }
 
     /**
      * @param Request $request
      *
      * @return JsonResponse
-     *
-     * @throws DBALException
      */
     public function pokedex(Request $request)
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection';
-        $query = $this->connection->query($sql);
-
-        return new JsonResponse([$query->fetchAll()]);
+        return new JsonResponse([$this->service->pokedex()]);
     }
 
     /**
@@ -44,17 +40,10 @@ class PokemonController
      * @return JsonResponse
      *
      * @throws \InvalidArgumentException
-     * @throws DBALException
      */
     public function getInformation($uuid)
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection WHERE uuid = :uuid';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->execute();
-
-        $pokemon = $query->fetch();
-
+        $pokemon = $this->service->getInformation($uuid);
         if ($pokemon === false) {
             return new JsonResponse(new \stdClass(), 404);
         }
@@ -72,31 +61,19 @@ class PokemonController
         $uuid = (string) Uuid::uuid4();
         $type = $request->get('type');
         $level = (int) $request->get('level');
-
-        if (!$this->typeExists($type)) {
-            return $this->createErrorResponse(
-                sprintf('Unknown type "%s".', $type)
-            );
-        }
-
-        if (!$this->levelIsValid($level)) {
-            return $this->createErrorResponse(
-                sprintf('Level "%s" is invalid.', $level)
-            );
-        }
-
-        $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->bindValue('type', $type);
-        $query->bindValue('level', $level);
-        $query->execute();
-
-        return new JsonResponse([
+        $pokemon = [
             'uuid' => $uuid,
             'type' => $type,
-            'level' => $level
-        ]);
+            'level' => $level,
+        ];
+
+        try {
+            $this->service->capture($pokemon);
+        } catch (\DomainException $e) {
+            return $this->createErrorResponse($e->getMessage());
+        }
+
+        return new JsonResponse($pokemon);
     }
 
     /**
@@ -106,47 +83,13 @@ class PokemonController
      */
     public function evolve($uuid)
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection WHERE uuid = :uuid';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->execute();
-        $pokemon = $query->fetch();
-
-        if ($pokemon === false) {
-            return new JsonResponse(new \stdClass(), 404);
+        try {
+            $evolvedPokemon = $this->service->evolve($uuid);
+        } catch (\DomainException $e) {
+            return $this->createErrorResponse($e->getMessage());
         }
-
-        $evolution = $this->getEvolution($pokemon);
-        if ($evolution === false) {
-            return $this->createErrorResponse(
-                sprintf('Pokemon %s cannot evolve.', $pokemon['uuid'])
-            );
-        }
-
-        $sql = 'UPDATE pokemon.collection SET type = :type WHERE uuid = :uuid';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->bindValue('type', $evolution);
-        $query->execute();
-
-        $evolvedPokemon = array_merge($pokemon, ['type' => $evolution]);
 
         return new JsonResponse($evolvedPokemon);
-    }
-
-    /**
-     * @param string $type
-     * @return bool
-     */
-    private function typeExists($type)
-    {
-        $knownType = [
-            'bulbizarre',
-            'herbizarre',
-            'florizarre',
-        ];
-
-        return in_array($type, $knownType);
     }
 
     /**
@@ -156,44 +99,5 @@ class PokemonController
     private function createErrorResponse($message)
     {
         return new JsonResponse(['error' => $message], 400);
-    }
-
-    /**
-     * @param int $level
-     * @return bool
-     */
-    private function levelIsValid($level)
-    {
-        return (1 <= $level && $level <= 30);
-    }
-
-    /**
-     * @param array $pokemon
-     * @return string|bool
-     */
-    private function getEvolution($pokemon)
-    {
-        $evolutionMap = [
-            'bulbizarre' => [
-                'min_level' => 16,
-                'evolution' => 'herbizarre',
-            ],
-            'herbizarre' => [
-                'min_level' => 32,
-                'evolution' => 'florizarre',
-            ],
-        ];
-
-        $type = $pokemon['type'];
-        if (!isset($evolutionMap[$type])) {
-            return false;
-        }
-
-        $minLevel = $evolutionMap[$type]['min_level'];
-        if ($pokemon['level'] < $minLevel) {
-            return false;
-        }
-
-        return $evolutionMap[$type]['evolution'];
     }
 }

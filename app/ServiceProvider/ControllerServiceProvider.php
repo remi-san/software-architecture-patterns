@@ -19,7 +19,7 @@ class ControllerServiceProvider implements ServiceProviderInterface
     public function register(Container $app)
     {
         $app['application.controllers.pokemon'] = function () use ($app) {
-            return new PokemonController($app['db']);
+            return new PokemonController($app['application.services.pokemon']);
         };
     }
 }

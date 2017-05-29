@@ -28,5 +28,6 @@ $app->register(new DoctrineOrmServiceProvider(), [
         ],
     ],
 ]);
+$app->register(new \ServiceProvider\ServiceServiceProvider());
 
 return $app;
