@@ -2,6 +2,7 @@
 
 namespace Evaneos\Archi\Controllers;
 
+use Evaneos\Archi\Domain\Pokemon;
 use Evaneos\Archi\Exceptions\InvalidPokemonLevel;
 use Evaneos\Archi\Exceptions\UnknownPokemonType;
 use Evaneos\Archi\Services\PokemonService;
@@ -31,7 +32,11 @@ class PokemonController
      */
     public function pokedex(Request $request)
     {
-        return new JsonResponse([$this->service->pokedex()]);
+        $collection = [];
+        foreach ($this->service->pokedex() as $pokemon) {
+            $collection[] = $this->pokemonToArray($pokemon);
+        }
+        return new JsonResponse($collection);
     }
 
     /**
@@ -48,7 +53,7 @@ class PokemonController
             return new JsonResponse(new \stdClass(), 404);
         }
 
-        return new JsonResponse($pokemon);
+        return new JsonResponse($this->pokemonToArray($pokemon));
     }
 
     /**
@@ -58,22 +63,16 @@ class PokemonController
      */
     public function capture(Request $request)
     {
-        $uuid = (string) Uuid::uuid4();
         $type = $request->get('type');
         $level = (int) $request->get('level');
-        $pokemon = [
-            'uuid' => $uuid,
-            'type' => $type,
-            'level' => $level,
-        ];
 
         try {
-            $this->service->capture($pokemon);
+            $pokemon = $this->service->capture($type, $level);
         } catch (\DomainException $e) {
             return $this->createErrorResponse($e->getMessage());
         }
 
-        return new JsonResponse($pokemon);
+        return new JsonResponse($this->pokemonToArray($pokemon));
     }
 
     /**
@@ -89,7 +88,7 @@ class PokemonController
             return $this->createErrorResponse($e->getMessage());
         }
 
-        return new JsonResponse($evolvedPokemon);
+        return new JsonResponse($this->pokemonToArray($evolvedPokemon));
     }
 
     /**
@@ -99,5 +98,14 @@ class PokemonController
     private function createErrorResponse($message)
     {
         return new JsonResponse(['error' => $message], 400);
+    }
+
+    private function pokemonToArray(Pokemon $pokemon)
+    {
+        return [
+            'uuid' => $pokemon->getId()->getId(),
+            'type' => $pokemon->getType()->getType(),
+            'level' => $pokemon->getLevel()->getLevel(),
+        ];
     }
 }
