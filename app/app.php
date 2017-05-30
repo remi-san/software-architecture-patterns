@@ -1,6 +1,7 @@
 <?php
 
 use Dflydev\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use ServiceProvider\PokemonServiceProvider;
 use Silex\Application;
 use Silex\Provider\AssetServiceProvider;
 use Silex\Provider\DoctrineServiceProvider;
@@ -28,5 +29,7 @@ $app->register(new DoctrineOrmServiceProvider(), [
         ],
     ],
 ]);
+
+$app->register(new PokemonServiceProvider());
 
 return $app;

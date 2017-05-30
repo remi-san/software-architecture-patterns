@@ -18,7 +18,7 @@ class Version20170523121152 extends AbstractMigration
         $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'pikachu', 5)");
         $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'carapuce', 8)");
         $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'salameche', 3)");
-        $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'bulbizare', 2)");
+        $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'bulbizarre', 2)");
         $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'chenipan', 15)");
         $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'aspicot', 11)");
         $this->addSql("INSERT INTO pokemon.collection (uuid, type, level) VALUES (uuid_generate_v4(), 'roucool', 19)");

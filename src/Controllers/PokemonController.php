@@ -2,40 +2,51 @@
 
 namespace Evaneos\Archi\Controllers;
 
-use Doctrine\DBAL\Connection;
+use Assert\AssertionFailedException;
 use Doctrine\DBAL\DBALException;
+use Evaneos\Archi\Domain\Collection\PokemonCollection;
+use Evaneos\Archi\Domain\Model\Exception\PokemonEvolvingException;
+use Evaneos\Archi\Domain\Model\Pokemon;
+use Evaneos\Archi\Domain\Model\VO\PokemonId;
+use Evaneos\Archi\Domain\Model\VO\PokemonLevel;
+use Evaneos\Archi\Domain\Model\VO\PokemonType;
+use Evaneos\Archi\Domain\Service\PokemonService;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class PokemonController
 {
-    /** @var Connection */
-    private $connection;
+    /** @var PokemonCollection */
+    private $collection;
+
+    /** @var PokemonService */
+    private $pokemonService;
 
     /**
      * PokemonController constructor.
      *
-     * @param Connection $connection
+     * @param PokemonCollection $collection
+     * @param PokemonService    $service
      */
-    public function __construct(Connection $connection)
-    {
-        $this->connection = $connection;
+    public function __construct(
+        PokemonCollection $collection,
+        PokemonService $service
+    ) {
+        $this->collection = $collection;
+        $this->pokemonService = $service;
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      *
      * @throws DBALException
      */
-    public function pokedex(Request $request)
+    public function pokedex()
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection';
-        $query = $this->connection->query($sql);
-
-        return new JsonResponse([$query->fetchAll()]);
+        return new JsonResponse(array_map(function (Pokemon $pokemon) {
+            return $pokemon->toArray();
+        }, $this->collection->all()));
     }
 
     /**
@@ -43,29 +54,27 @@ class PokemonController
      *
      * @return JsonResponse
      *
+     * @throws AssertionFailedException
      * @throws \InvalidArgumentException
      * @throws DBALException
      */
     public function getInformation($uuid)
     {
-        $sql = 'SELECT uuid, type, level FROM pokemon.collection WHERE uuid = :uuid';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->execute();
+        $pokemon = $this->collection->get(new PokemonId($uuid));
 
-        $pokemon = $query->fetch();
-
-        if ($pokemon === false) {
+        if ($pokemon === null) {
             return new JsonResponse(new \stdClass(), 404);
         }
 
-        return new JsonResponse($pokemon);
+        return new JsonResponse($pokemon->toArray());
     }
 
     /**
      * @param Request $request
      *
      * @return JsonResponse
+     *
+     * @throws AssertionFailedException
      */
     public function capture(Request $request)
     {
@@ -73,32 +82,27 @@ class PokemonController
         $type = $request->get('type');
         $level = (int) $request->get('level');
 
-        // TODO check type exists
-        // TODO check level is in bounds
+        $pokemon = $this->pokemonService->capture(
+            new PokemonId($uuid),
+            new PokemonType($type),
+            new PokemonLevel($level)
+        );
 
-        $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
-        $query = $this->connection->prepare($sql);
-        $query->bindValue('uuid', $uuid);
-        $query->bindValue('type', $type);
-        $query->bindValue('level', $level);
-        $query->execute();
-
-        return new JsonResponse([
-            'uuid' => $uuid,
-            'type' => $type,
-            'level' => $level
-        ]);
+        return new JsonResponse($pokemon->toArray());
     }
 
     /**
      * @param string $uuid
      *
      * @return JsonResponse
+     *
+     * @throws PokemonEvolvingException
+     * @throws \Assert\AssertionFailedException
      */
     public function evolve($uuid)
     {
-        // TODO
+        $pokemon = $this->pokemonService->evolve(new PokemonId($uuid));
 
-        return new JsonResponse([]);
+        return new JsonResponse($pokemon->toArray());
     }
 }
