@@ -41,10 +41,15 @@ Here, pokemon has been reduced to very simple features:
  - You can make a pokemon evolve
     
 Max level for a pokemon is 30.
+
 Min level for a pokemon is 1.
+
 A pokemon can evolve when he has attained level 7 (but doesn't have to).
+
 A pokemon can evolve again when he has attained level 15.
+
 A pokemon cannot skip an evolution (`carapuce` can't evolve directly to `tortank`).
+
 There are only 150 pokemons (http://www.poketips.fr/liste/).
     
 Phase 1:
@@ -69,3 +74,19 @@ Put all your domain logic in the Business Model objects.
 Phase 4:
 --------
 For each of the previous branches, try to CQRS it.
+
+Phase 5:
+--------
+Create a branch named `aggregate` from your CQRS version of the `hexagonal` branch.
+
+Let's consider we now have to manage a pokemon training camp.
+
+In that camp, we've got trainers who train pokemons.
+
+A trainer always has access to his whole collection of pokemons (they're in his pokedex) but he can only carry a maximum of 3 pokemons at a time (the three pokemons must be of different kinds).
+
+To catch a pokemon, a trainer must use a pokeball (a trainer can carry up to 20 pokeballs on him).
+
+A trainer can make a pokemon from its collection evolve (following the same rules).
+
+Now, let's implement it using the aggregate pattern.
