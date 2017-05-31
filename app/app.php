@@ -8,6 +8,9 @@ use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\HttpFragmentServiceProvider;
+use Type\PokemonIdType;
+use Type\PokemonLevelType;
+use Type\PokemonTypeType;
 
 $parameters = require __DIR__ . '/../config/parameters.php';
 
@@ -27,6 +30,11 @@ $app->register(new DoctrineOrmServiceProvider(), [
                 'path' => __DIR__.'/../src'
             ]
         ],
+        'types' => [
+            PokemonIdType::NAME => PokemonIdType::class,
+            PokemonLevelType::NAME => PokemonLevelType::class,
+            PokemonTypeType::NAME => PokemonTypeType::class
+        ]
     ],
 ]);
 

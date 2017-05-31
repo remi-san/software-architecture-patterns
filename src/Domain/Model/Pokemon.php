@@ -8,15 +8,29 @@ use Evaneos\Archi\Domain\Model\VO\PokemonId;
 use Evaneos\Archi\Domain\Model\VO\PokemonLevel;
 use Evaneos\Archi\Domain\Model\VO\PokemonType;
 
+/**
+ * @Entity
+ * @Table(name="pokemon.collection")
+ */
 class Pokemon
 {
-    /** @var PokemonId */
+    /**
+     * @var PokemonId
+     * @Id
+     * @Column(type="pokemon-id", name="uuid")
+     */
     private $id;
 
-    /** @var PokemonType */
+    /**
+     * @var PokemonType
+     * @Column(type="pokemon-type")
+     */
     private $type;
 
-    /** @var PokemonLevel */
+    /**
+     * @var PokemonLevel
+     * @Column(type="pokemon-level")
+     */
     private $level;
 
     /**
