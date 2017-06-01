@@ -15,11 +15,6 @@ interface PokemonCollection
     public function get(PokemonId $id);
 
     /**
-     * @return Pokemon[]
-     */
-    public function all();
-
-    /**
      * @param Pokemon $pokemon
      *
      * @return void

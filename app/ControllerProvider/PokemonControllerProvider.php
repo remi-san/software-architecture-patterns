@@ -22,7 +22,7 @@ class PokemonControllerProvider implements ControllerProviderInterface
 
         $controllers->get(
             '/',
-            'application.controllers.pokemon:pokedex'
+            'application.controllers.pokemon:pokemonLookup'
         );
 
         $controllers->get(
