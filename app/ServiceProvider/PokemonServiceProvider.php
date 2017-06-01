@@ -3,8 +3,8 @@
 namespace ServiceProvider;
 
 use Evaneos\Archi\Domain\Service\PokemonService;
-use Evaneos\Archi\Infrastructure\OrmPokemonCollection;
-use Evaneos\Archi\Infrastructure\SqlPokemonCollection;
+use Evaneos\Archi\Infrastructure\Domain\OrmPokemonCollection;
+use Evaneos\Archi\Infrastructure\ReadModel\SqlPokemonLookup;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
@@ -21,7 +21,7 @@ class PokemonServiceProvider implements ServiceProviderInterface
     public function register(Container $app)
     {
         $app['pokemon.collection.sql'] = function () use ($app) {
-            return new SqlPokemonCollection($app['db']);
+            return new SqlPokemonLookup($app['db']);
         };
 
         $app['pokemon.collection.orm'] = function () use ($app) {

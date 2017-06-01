@@ -40,8 +40,6 @@ class PokemonService
         $pokemon = new Pokemon($id, $type, $level);
 
         $this->collection->add($pokemon);
-
-        return $pokemon;
     }
 
     /**
@@ -59,7 +57,5 @@ class PokemonService
         $pokemon->evolve();
 
         $this->collection->update($pokemon);
-
-        return $pokemon;
     }
 }

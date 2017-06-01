@@ -51,30 +51,6 @@ class Pokemon
     }
 
     /**
-     * @return PokemonId
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return PokemonType
-     */
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * @return PokemonLevel
-     */
-    public function getLevel()
-    {
-        return $this->level;
-    }
-
-    /**
      * Make the pokemon evolve
      *
      * @throws PokemonEvolvingException

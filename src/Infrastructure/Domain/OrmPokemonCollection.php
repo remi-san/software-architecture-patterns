@@ -1,10 +1,7 @@
 <?php
 
-namespace Evaneos\Archi\Infrastructure;
+namespace Evaneos\Archi\Infrastructure\Domain;
 
-use Assert\AssertionFailedException;
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\OptimisticLockException;
@@ -12,8 +9,6 @@ use Doctrine\ORM\ORMInvalidArgumentException;
 use Evaneos\Archi\Domain\Collection\PokemonCollection;
 use Evaneos\Archi\Domain\Model\Pokemon;
 use Evaneos\Archi\Domain\Model\VO\PokemonId;
-use Evaneos\Archi\Domain\Model\VO\PokemonLevel;
-use Evaneos\Archi\Domain\Model\VO\PokemonType;
 
 class OrmPokemonCollection implements PokemonCollection
 {
@@ -42,14 +37,6 @@ class OrmPokemonCollection implements PokemonCollection
     public function get(PokemonId $id)
     {
         return $this->pokemonRepository->find((string) $id);
-    }
-
-    /**
-     * @return Pokemon[]
-     */
-    public function all()
-    {
-        return $this->pokemonRepository->findAll();
     }
 
     /**
