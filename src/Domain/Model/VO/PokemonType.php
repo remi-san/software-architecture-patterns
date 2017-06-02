@@ -30,7 +30,7 @@ class PokemonType
         'chrysacier' => ['evolution' => 'papillusion', 'minLevel' => 7],
         'papillusion' => ['evolution' => null, 'minLevel' => 15],
 
-        'aspicot' => ['evolution' => 'aspicot', 'minLevel' => 1],
+        'aspicot' => ['evolution' => 'coconfort', 'minLevel' => 1],
         'coconfort' => ['evolution' => 'dardagnan', 'minLevel' => 7],
         'dardagnan' => ['evolution' => null, 'minLevel' => 15],
 
