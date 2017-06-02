@@ -3,12 +3,12 @@
 namespace Evaneos\Archi\Domain\Service;
 
 use Assert\AssertionFailedException;
+use Evaneos\Archi\Domain\Collection\PokemonCollection;
 use Evaneos\Archi\Domain\Model\Exception\PokemonEvolvingException;
 use Evaneos\Archi\Domain\Model\Pokemon;
 use Evaneos\Archi\Domain\Model\VO\PokemonId;
 use Evaneos\Archi\Domain\Model\VO\PokemonLevel;
 use Evaneos\Archi\Domain\Model\VO\PokemonType;
-use Evaneos\Archi\Domain\Collection\PokemonCollection;
 
 class PokemonService
 {
@@ -29,8 +29,6 @@ class PokemonService
      * @param PokemonId    $id
      * @param PokemonType  $type
      * @param PokemonLevel $level
-     *
-     * @return Pokemon
      */
     public function capture(
         PokemonId $id,
@@ -40,14 +38,10 @@ class PokemonService
         $pokemon = new Pokemon($id, $type, $level);
 
         $this->collection->add($pokemon);
-
-        return $pokemon;
     }
 
     /**
      * @param PokemonId $id
-     *
-     * @return Pokemon
      *
      * @throws PokemonEvolvingException
      * @throws AssertionFailedException
@@ -59,7 +53,5 @@ class PokemonService
         $pokemon->evolve();
 
         $this->collection->update($pokemon);
-
-        return $pokemon;
     }
 }

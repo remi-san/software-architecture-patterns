@@ -4,21 +4,21 @@ namespace Evaneos\Archi\Controllers;
 
 use Assert\AssertionFailedException;
 use Doctrine\DBAL\DBALException;
-use Evaneos\Archi\Domain\Collection\PokemonCollection;
 use Evaneos\Archi\Domain\Model\Exception\PokemonEvolvingException;
-use Evaneos\Archi\Domain\Model\Pokemon;
 use Evaneos\Archi\Domain\Model\VO\PokemonId;
 use Evaneos\Archi\Domain\Model\VO\PokemonLevel;
 use Evaneos\Archi\Domain\Model\VO\PokemonType;
 use Evaneos\Archi\Domain\Service\PokemonService;
+use Evaneos\Archi\Query\Finder\PokemonFinder;
+use Evaneos\Archi\Query\Model\QueryPokemon;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class PokemonController
 {
-    /** @var PokemonCollection */
-    private $collection;
+    /** @var PokemonFinder */
+    private $finder;
 
     /** @var PokemonService */
     private $pokemonService;
@@ -26,14 +26,14 @@ class PokemonController
     /**
      * PokemonController constructor.
      *
-     * @param PokemonCollection $collection
-     * @param PokemonService    $service
+     * @param PokemonFinder  $finder
+     * @param PokemonService $service
      */
     public function __construct(
-        PokemonCollection $collection,
+        PokemonFinder $finder,
         PokemonService $service
     ) {
-        $this->collection = $collection;
+        $this->finder = $finder;
         $this->pokemonService = $service;
     }
 
@@ -42,11 +42,11 @@ class PokemonController
      *
      * @throws DBALException
      */
-    public function pokedex()
+    public function listCollection()
     {
-        return new JsonResponse(array_map(function (Pokemon $pokemon) {
+        return new JsonResponse(array_map(function (QueryPokemon $pokemon) {
             return $pokemon->toArray();
-        }, $this->collection->all()));
+        }, $this->finder->all()));
     }
 
     /**
@@ -60,7 +60,7 @@ class PokemonController
      */
     public function getInformation($uuid)
     {
-        $pokemon = $this->collection->get(new PokemonId($uuid));
+        $pokemon = $this->finder->get(new PokemonId($uuid));
 
         if ($pokemon === null) {
             return new JsonResponse(new \stdClass(), 404);
@@ -82,13 +82,13 @@ class PokemonController
         $type = $request->get('type');
         $level = (int) $request->get('level');
 
-        $pokemon = $this->pokemonService->capture(
+        $this->pokemonService->capture(
             new PokemonId($uuid),
             new PokemonType($type),
             new PokemonLevel($level)
         );
 
-        return new JsonResponse($pokemon->toArray());
+        return new JsonResponse($this->finder->get($uuid)->toArray());
     }
 
     /**
@@ -101,8 +101,8 @@ class PokemonController
      */
     public function evolve($uuid)
     {
-        $pokemon = $this->pokemonService->evolve(new PokemonId($uuid));
+        $this->pokemonService->evolve(new PokemonId($uuid));
 
-        return new JsonResponse($pokemon->toArray());
+        return new JsonResponse($this->finder->get($uuid)->toArray());
     }
 }
